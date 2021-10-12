@@ -24,6 +24,7 @@
 #include <chrono>
 #include <iostream>
 #include <atomic>
+#include <cstdlib>
 #include "sp_midi.h"
 #include "midiout.h"
 #include "midiin.h"
@@ -53,25 +54,25 @@ static ErlNifPid midi_process_pid;
 
 static atomic<bool> g_already_initialized { false };
 
-void prepareMidiSendProcessorOutputs(unique_ptr<MidiSendProcessor>& midiSendProcessor)
+void prepareMidiSendProcessorOutputs(unique_ptr<MidiSendProcessor>& midiSendProcessor, const std::string& midiApi = "unspecified")
 {
     // Open all MIDI devices. This is what Sonic Pi does
-    vector<MidiPortInfo> connectedOutputPortsInfo = MidiOut::getOutputPortInfo();
+    vector<MidiPortInfo> connectedOutputPortsInfo = MidiOut::getOutputPortInfo(midiApi);
     {
-        midiSendProcessor->prepareOutputs(connectedOutputPortsInfo);
+        midiSendProcessor->prepareOutputs(connectedOutputPortsInfo, midiApi);
     }
 }
 
 
-void prepareMidiInputs(vector<unique_ptr<MidiIn> >& midiInputs)
+void prepareMidiInputs(vector<unique_ptr<MidiIn> >& midiInputs, const std::string& midiApi = "unspecified")
 {
     // Should we open all devices, or just the ones passed as parameters?
-    vector<MidiPortInfo> connectedInputPortsInfo = MidiIn::getInputPortInfo();
+    vector<MidiPortInfo> connectedInputPortsInfo = MidiIn::getInputPortInfo(midiApi);
 
     midiInputs.clear();
     for (const auto& input : connectedInputPortsInfo) {
         try {
-            auto midiInput = make_unique<MidiIn>(input.portName, input.normalizedPortName, input.portId, false);
+            auto midiInput = make_unique<MidiIn>(input.portName, input.normalizedPortName, input.portId, false, midiApi);
             midiInputs.push_back(std::move(midiInput));
         } catch (const RtMidiError& e) {
             cout << "Could not open input device " << input.portName << ": " << e.what() << endl;
@@ -126,10 +127,14 @@ int sp_midi_init()
     g_threadsShouldFinish = false;
     MonitorLogger::getInstance().setLogLevel(g_monitor_level);
 
+    const char *midiApi = std::getenv("SP_MIDI_API");
+    if (!midiApi)
+        midiApi = "unspecified";
+
     midiSendProcessor = make_unique<MidiSendProcessor>();
     // Prepare the MIDI outputs
     try {
-        prepareMidiSendProcessorOutputs(midiSendProcessor);
+        prepareMidiSendProcessorOutputs(midiSendProcessor, midiApi);
     } catch (const std::out_of_range&) {
         cout << "Error opening MIDI outputs" << endl;
         return -1;
@@ -137,7 +142,7 @@ int sp_midi_init()
 
     // Prepare the MIDI inputs
     try{
-        prepareMidiInputs(midiInputs);
+        prepareMidiInputs(midiInputs, midiApi);
     } catch (const std::out_of_range&) {
         cout << "Error opening MIDI inputs" << endl;
         return -1;

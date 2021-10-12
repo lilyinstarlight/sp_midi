@@ -31,14 +31,14 @@
 // This class manages a MIDI input device as seen by JUCE
 class MidiIn : public MidiCommon {
 public:
-    MidiIn(const std::string& portName, const std::string& normalizedPortName, int portId, bool isVirtual = false);
+    MidiIn(const std::string& portName, const std::string& normalizedPortName, int portId, bool isVirtual = false, const std::string& midiApi = "unspecified");
     MidiIn(const MidiIn&) = delete;
     MidiIn& operator=(const MidiIn&) = delete;
 
     virtual ~MidiIn();
 
-    static std::vector<std::string> getNormalizedInputNames();
-    static std::vector<MidiPortInfo> getInputPortInfo();
+    static std::vector<std::string> getNormalizedInputNames(const std::string& midiApi = "unspecified");
+    static std::vector<MidiPortInfo> getInputPortInfo(const std::string& midiApi = "unspecified");
 
 protected:
 

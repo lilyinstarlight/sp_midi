@@ -32,7 +32,7 @@
 // This class manages a MIDI output device
 class MidiOut : public MidiCommon {
 public:
-    MidiOut(const std::string& portName, const std::string& normalizedPortName, int portId);
+    MidiOut(const std::string& portName, const std::string& normalizedPortName, int portId, const std::string& midiApi = "unspecified");
     MidiOut(const MidiOut&) = delete;
     MidiOut& operator=(const MidiOut&) = delete;
 
@@ -40,8 +40,8 @@ public:
 
     void send(const std::vector< unsigned char >* msg);
 
-    static std::vector<std::string> getNormalizedOutputNames();
-    static std::vector<MidiPortInfo> getOutputPortInfo();
+    static std::vector<std::string> getNormalizedOutputNames(const std::string& midiApi = "unspecified");
+    static std::vector<MidiPortInfo> getOutputPortInfo(const std::string& midiApi = "unspecified");
 protected:
 
 

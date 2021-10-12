@@ -26,7 +26,7 @@
 
 using namespace std;
 
-MidiOut::MidiOut(const std::string& portName, const std::string& normalizedPortName, int portId)
+MidiOut::MidiOut(const std::string& portName, const std::string& normalizedPortName, int portId, const std::string& midiApi)
 {
     m_logger.debug("MidiOut constructor for {}", portName);
 
@@ -35,7 +35,7 @@ MidiOut::MidiOut(const std::string& portName, const std::string& normalizedPortN
     m_rtMidiId = portId;
 
     // FIXME: need to check if name does not exist
-    m_midiOut = make_unique<RtMidiOut>();
+    m_midiOut = make_unique<RtMidiOut>(RtMidi::getCompiledApiByName(midiApi));
 
     try
     {
@@ -69,15 +69,15 @@ void MidiOut::send(const std::vector< unsigned char >* msg)
     }
 }
 
-vector<MidiPortInfo> MidiOut::getOutputPortInfo()
+vector<MidiPortInfo> MidiOut::getOutputPortInfo(const std::string& midiApi)
 {
-    RtMidiOut outs;
+    RtMidiOut outs(RtMidi::getCompiledApiByName(midiApi));
     auto outs_info = getPortInfo(outs);
     return outs_info;
 }
 
-vector<string> MidiOut::getNormalizedOutputNames()
+vector<string> MidiOut::getNormalizedOutputNames(const std::string& midiApi)
 {
-    vector<MidiPortInfo> info = getOutputPortInfo();
+    vector<MidiPortInfo> info = getOutputPortInfo(midiApi);
     return getNormalizedNamesFromPortInfos(info);
 }

@@ -28,7 +28,7 @@
 
 using namespace std;
 
-MidiIn::MidiIn(const string& portName, const string& normalizedPortName, int portId, bool isVirtual) : m_oscRawMidiMessage(false)
+MidiIn::MidiIn(const string& portName, const string& normalizedPortName, int portId, bool isVirtual, const std::string& midiApi) : m_oscRawMidiMessage(false)
 {
     m_logger.debug("MidiIn constructor for {}", portName);
     m_portName = portName;
@@ -37,7 +37,7 @@ MidiIn::MidiIn(const string& portName, const string& normalizedPortName, int por
     // FIXME: need to check if name does not exist
     if (!isVirtual) {
         m_rtMidiId = portId;
-        m_midiIn = make_unique<RtMidiIn>();
+        m_midiIn = make_unique<RtMidiIn>(RtMidi::getCompiledApiByName(midiApi));
 
         try
         {
@@ -92,15 +92,15 @@ void MidiIn::midiCallback(double timeStamp, std::vector< unsigned char > *midiMe
     send_midi_data_to_erlang(getNormalizedPortName().c_str(), midiMessage->data(), midiMessage->size());
 }
 
-vector<MidiPortInfo> MidiIn::getInputPortInfo()
+vector<MidiPortInfo> MidiIn::getInputPortInfo(const std::string& midiApi)
 {
-    RtMidiIn ins;
+    RtMidiIn ins(RtMidi::getCompiledApiByName(midiApi));
     auto ins_info = getPortInfo(ins);
     return ins_info;
 }
 
-vector<string> MidiIn::getNormalizedInputNames()
+vector<string> MidiIn::getNormalizedInputNames(const std::string& midiApi)
 {
-    vector<MidiPortInfo> info = getInputPortInfo();
+    vector<MidiPortInfo> info = getInputPortInfo(midiApi);
     return getNormalizedNamesFromPortInfos(info);
 }
